@@ -26,14 +26,20 @@ cron.schedule('30 15 * * *', () => {
     updateFundNavs();
 });
 
+// Start listening immediately so Render detects the open port
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
   })
   .catch(err => {
-    console.error('Failed to connect to MongoDB:', err);
+    console.error('CRITICAL: Failed to connect to MongoDB:', err);
+    // Gracefully shut down the server and exit so Render knows it failed
+    server.close(() => {
+      process.exit(1);
+    });
   });
